@@ -5,16 +5,32 @@ import java.util.HashMap;
 
 public class AFN {
 	
+	//Expressão regular do AFN
 	private String expressao;
+	
+	//Símbolos pertencentes à linguagem do AFN
 	private ArrayList<String> simbolos;
+	
+	//HashMap com os estados do AFN, onde o índice é o estado e seu conteúdo são as suas transições
 	private HashMap<String, String[]> estados;
+	
+	//Contador usado para nomear os estados. É incrementado cada vez que um novo estado é adicionado
 	private int contadorEstados;	
 	
+	//Estado inicial do AFN
 	private int estadoInicial;
+	
+	//Estado inicial da sub-expressão que está sendo analisado. 
+	//É usada para não perder o valor do estado inicial do AFN
 	private int estadoInicialTemporario;
+	
+	//Estados de aceitação do AFN
 	private ArrayList<Integer> estadosDeAceitacao;
 	
+	//Variável para guardar a posição inicial quando for iniciar uma recursão 
 	private int posIniRecursao;
+	
+	//Variável para guardar a posição final quando for iniciar uma recursão
 	private int posFimRecursao;
 	
 	public AFN(String expr){
@@ -32,6 +48,10 @@ public class AFN {
 		imprimeTabela();
 	}
 	
+	/**
+	 * Preenche a lista de símbolos com todos os símbolos reconhecidos
+	 * na expressão regular
+	 */
 	private void definirSimbolos(){		
 		for (int i = 0 ; i < expressao.length() ; i++){
 			if (ExpressaoRegular.isLetra(expressao.charAt(i)))
@@ -41,9 +61,17 @@ public class AFN {
 		simbolos.add(""+ExpressaoRegular.PALAVRA_VAZIA);
 	}
 	
+	/**
+	 * Preenche a lista de estados da expressão regular.
+	 * Cada estado é adicionado na variável ArrayList<String> eEtr (estados E transições)
+	 * que possui todas as transições correspondentes ao estado (é inicializado com todas 
+	 * as transições vazias) e em seguida adicionado na lista de estados da expressão regular.
+	 * 
+	 */
 	private void definirEstados(){
 		int posIni = posIniRecursao == -1 ? 0 : posIniRecursao;
 		int posFim = posFimRecursao == -1 ? expressao.length() : posFimRecursao;
+		
 		for (int i = posIni ; i < posFim ; i++){
 			if (expressao.charAt(i) == '('){
 				posIniRecursao = i + 1;
@@ -55,8 +83,7 @@ public class AFN {
 				
 				i += numPosicoesAPular;
 			}
-			else if (expressao.charAt(i) == ExpressaoRegular.VAZIO || 
-					expressao.charAt(i) == ExpressaoRegular.PALAVRA_VAZIA){
+			else if (expressao.charAt(i) == ExpressaoRegular.VAZIO || expressao.charAt(i) == ExpressaoRegular.PALAVRA_VAZIA){
 				contadorEstados++;
 				
 				if (estadoInicial == -1)
@@ -67,7 +94,7 @@ public class AFN {
 				estados.put("q"+contadorEstados, converterArrayListParaArray(eEtr));
 				
 				if (expressao.charAt(i) == ExpressaoRegular.PALAVRA_VAZIA){
-					estadosDeAceitacao.clear();
+					estadosDeAceitacao.remove(estadosDeAceitacao.size()-1);
 					estadosDeAceitacao.add(contadorEstados);
 				}
 			}
@@ -79,29 +106,31 @@ public class AFN {
 				
 				for (Integer ea : estadosDeAceitacao){
 					eEtr = converterArrayParaArrayList(estados.get("q"+ea));
-					eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+contadorEstados);
+					eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+estadoInicialTemporario);
 					estados.put("q"+ea, converterArrayListParaArray(eEtr));
 				}				
 				
 				estadoInicial = contadorEstados;
-				estadosDeAceitacao.clear();
+				//estadosDeAceitacao.clear();
 				estadosDeAceitacao.add(contadorEstados);
 			}
 			else if (expressao.charAt(i) == ExpressaoRegular.CONCATENACAO){
 				posIniRecursao = i+1;
-				posFimRecursao = i+2;
+				posFimRecursao = expressao.charAt(i+1) == '(' ? expressao.indexOf(')', i+1) : i+2;
 				int numPosicoesAPular = posFimRecursao - posIniRecursao;
+				int estadoA = estadoInicialTemporario;
 				contadorEstados++;
 				definirEstados();
 				estadosDeAceitacao.remove(estadosDeAceitacao.size()-1);
 				
-				for (Integer ea : estadosDeAceitacao){
-					ArrayList<String> eEtr = converterArrayParaArrayList(estados.get("q"+ea));
-					eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+estadoInicialTemporario);
-					estados.put("q"+ea, converterArrayListParaArray(eEtr));
-				}
+				int ea = estadosDeAceitacao.get(estadosDeAceitacao.size()-1);
+				ArrayList<String> eEtr = converterArrayParaArrayList(estados.get("q"+ea));
+				eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+estadoInicialTemporario);
+				estados.put("q"+ea, converterArrayListParaArray(eEtr));				
 				
-				estadosDeAceitacao.clear();
+				estadoInicialTemporario = estadoA;
+
+				estadosDeAceitacao.remove(estadosDeAceitacao.size()-1);
 				estadosDeAceitacao.add(contadorEstados);
 				
 				i += numPosicoesAPular;
@@ -119,7 +148,8 @@ public class AFN {
 				eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+estadoA+"q"+estadoInicialTemporario);
 				estados.put("q"+contadorEstados, converterArrayListParaArray(eEtr));
 				
-				estadoInicial = contadorEstados;				
+				estadoInicial = contadorEstados;
+				estadoInicialTemporario = contadorEstados;
 				
 				i += numPosicoesAPular;
 			}
@@ -139,10 +169,15 @@ public class AFN {
 				estadosDeAceitacao.add(contadorEstados);				
 			}
 		}
+		
 		posIniRecursao = -1;
 		posFimRecursao = -1;
 	}
 	
+	/**
+	 * Inicializa um estado com todas as transições vazias para a tabela de transições
+	 * @return
+	 */
 	private ArrayList<String> inicializaEstados(){
 		ArrayList<String> array = new ArrayList<String>();		
 		for (int i = 0 ; i < simbolos.size() ; i++)
