@@ -3,49 +3,20 @@ package main;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class AFN {
-	
-	//Expressão regular do AFN
-	private String expressao;
-	
-	//Símbolos pertencentes à linguagem do AFN
-	private ArrayList<String> simbolos;
-	
-	//HashMap com os estados do AFN, onde o índice é o estado e seu conteúdo são as suas transições
-	private HashMap<String, String[]> estados;
-	
-	//Contador usado para nomear os estados. É incrementado cada vez que um novo estado é adicionado
-	private int contadorEstados;	
-	
-	//Estado inicial do AFN
-	private int estadoInicial;
-	
-	//Estado inicial da sub-expressão que está sendo analisado. 
-	//É usada para não perder o valor do estado inicial do AFN
-	private int estadoInicialTemporario;
-	
-	//Estados de aceitação do AFN
-	private ArrayList<Integer> estadosDeAceitacao;
-	
-	//Variável para guardar a posição inicial quando for iniciar uma recursão 
-	private int posIniRecursao;
-	
-	//Variável para guardar a posição final quando for iniciar uma recursão
-	private int posFimRecursao;
+public class AFN extends AutomatoFinito{	
 	
 	public AFN(String expr){
 		expressao = expr;
 		simbolos = new ArrayList<String>();
 		estados = new HashMap<String, String[]>();
 		contadorEstados = 0;
-		estadoInicial = -1;
+		estadoInicial = "-1";
 		estadosDeAceitacao = new ArrayList<Integer>();
 		posIniRecursao = -1;
 		posFimRecursao = -1;
 		
 		definirSimbolos();
 		definirEstados();
-		imprimeTabela();
 	}
 	
 	/**
@@ -77,18 +48,18 @@ public class AFN {
 				posIniRecursao = i + 1;
 				posFimRecursao = expressao.indexOf(')', i);
 				int numPosicoesAPular = posFimRecursao - posIniRecursao;
-				int estadoInicialTemporarioParenteses = contadorEstados;
+				String estadoInicialTemporarioParenteses = ""+contadorEstados;
 				definirEstados();
-				estadoInicialTemporario = estadoInicialTemporarioParenteses;
+				//estadoInicialTemporario = estadoInicialTemporarioParenteses;
 				
 				i += numPosicoesAPular;
 			}
 			else if (expressao.charAt(i) == ExpressaoRegular.VAZIO || expressao.charAt(i) == ExpressaoRegular.PALAVRA_VAZIA){
 				contadorEstados++;
 				
-				if (estadoInicial == -1)
-					estadoInicial = contadorEstados;
-				estadoInicialTemporario = contadorEstados;
+				if (estadoInicial.equals("-1"))
+					estadoInicial = ""+contadorEstados;
+				estadoInicialTemporario = ""+contadorEstados;
 				
 				ArrayList<String> eEtr = inicializaEstados();
 				estados.put("q"+contadorEstados, converterArrayListParaArray(eEtr));
@@ -110,7 +81,7 @@ public class AFN {
 					estados.put("q"+ea, converterArrayListParaArray(eEtr));
 				}				
 				
-				estadoInicial = contadorEstados;
+				estadoInicial = ""+contadorEstados;
 				//estadosDeAceitacao.clear();
 				estadosDeAceitacao.add(contadorEstados);
 			}
@@ -118,7 +89,7 @@ public class AFN {
 				posIniRecursao = i+1;
 				posFimRecursao = expressao.charAt(i+1) == '(' ? expressao.indexOf(')', i+1) : i+2;
 				int numPosicoesAPular = posFimRecursao - posIniRecursao;
-				int estadoA = estadoInicialTemporario;
+				String estadoA = estadoInicialTemporario;
 				contadorEstados++;
 				definirEstados();
 				estadosDeAceitacao.remove(estadosDeAceitacao.size()-1);
@@ -139,7 +110,7 @@ public class AFN {
 				posIniRecursao = i+1;
 				posFimRecursao = expressao.charAt(i+1) == '(' ? expressao.indexOf(')', i+1) : i+2;
 				int numPosicoesAPular = posFimRecursao - posIniRecursao;
-				int estadoA = estadoInicialTemporario;
+				String estadoA = estadoInicialTemporario;
 				contadorEstados++;
 				definirEstados();
 				contadorEstados++;
@@ -148,15 +119,15 @@ public class AFN {
 				eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+estadoA+"q"+estadoInicialTemporario);
 				estados.put("q"+contadorEstados, converterArrayListParaArray(eEtr));
 				
-				estadoInicial = contadorEstados;
-				estadoInicialTemporario = contadorEstados;
+				estadoInicial = ""+contadorEstados;
+				estadoInicialTemporario = ""+contadorEstados;
 				
 				i += numPosicoesAPular;
 			}
 			else if (ExpressaoRegular.isLetra(expressao.charAt(i))){
-				if (estadoInicial == -1)
-					estadoInicial = contadorEstados;
-				estadoInicialTemporario = contadorEstados;
+				if (estadoInicial.equals("-1"))
+					estadoInicial = ""+contadorEstados;
+				estadoInicialTemporario = ""+contadorEstados;
 				
 				ArrayList<String> eEtr = inicializaEstados();				
 				eEtr.set(simbolos.indexOf(""+expressao.charAt(i)), "q"+(contadorEstados+1));
@@ -172,64 +143,6 @@ public class AFN {
 		
 		posIniRecursao = -1;
 		posFimRecursao = -1;
-	}
-	
-	/**
-	 * Inicializa um estado com todas as transições vazias para a tabela de transições
-	 * @return
-	 */
-	private ArrayList<String> inicializaEstados(){
-		ArrayList<String> array = new ArrayList<String>();		
-		for (int i = 0 ; i < simbolos.size() ; i++)
-			array.add(ExpressaoRegular.VAZIO+" ");
-		
-		return array;
-	}
-	
-	private String[] converterArrayListParaArray(ArrayList<String> arraylist){
-		String[] array = new String[simbolos.size()];
-		int i = 0;
-		
-		for (String a : arraylist)
-			array[i++] = a;
-		
-		return array;
-	}
-	
-	private ArrayList<String> converterArrayParaArrayList(String[] array){
-		ArrayList<String> arraylist = new ArrayList<String>();
-		
-		for (String a : array)
-			arraylist.add(a);
-		
-		return arraylist;
-	}
-	
-	private void imprimeTabela(){
-		System.out.print("    ");
-		for (String s : simbolos)
-			System.out.print(s+"  ");
-		System.out.println("");
-		
-		Object[] keysInv = estados.keySet().toArray();
-		Object[] keys = new Object[keysInv.length];
-		
-		for (int i = 0 ; i < keysInv.length; i++)
-			keys[i] = keysInv[keysInv.length - i - 1];
-		
-		for (Object o : keys){
-			System.out.print(o+": ");
-			for (String s : estados.get(o+""))
-				System.out.print(s+" ");
-			
-			System.out.println("");
-		}
-		
-		System.out.println("\nEstado inicial: q"+estadoInicial);
-		System.out.print("Estado de aceitacao: ");
-		
-		for (Integer ea : estadosDeAceitacao)
-			System.out.print("q"+ea+" ");
-	}
+	}	
 	
 }
