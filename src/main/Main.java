@@ -3,14 +3,14 @@ package main;
 public class Main {
 	
 	public static void main(String args[]){
-		String expressao = "(a+b)+c"; 
+		String expressao = "(a.b)*b"; 
 		
 		AFN afn = new AFN(expressao);
-		afn.imprimeTabela();
+		//afn.imprimeTabela();
 		
 		Object[] variaveisDoAFNProAFD = {afn.getSimbolos(), afn.getEstados(), afn.getEstadoInicial(), afn.getEstadosDeAceitacao()};
 		AFD afd = new AFD(variaveisDoAFNProAFD);
-		//afd.imprimeTabela();
+		afd.imprimeTabela();
 		
 		String palavra = "aba";
 		//System.out.println(afd.checaValidadePalavra(palavra));

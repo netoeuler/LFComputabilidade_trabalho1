@@ -75,6 +75,8 @@ public class AFN extends AutomatoFinito{
 				eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+estadoInicialTemporario);
 				estados.put("q"+contadorEstados, converterArrayListParaArray(eEtr));
 				
+				estadoInicialTemporario = ""+contadorEstados;
+				
 				for (Integer ea : estadosDeAceitacao){
 					eEtr = converterArrayParaArrayList(estados.get("q"+ea));
 					eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+estadoInicialTemporario);
