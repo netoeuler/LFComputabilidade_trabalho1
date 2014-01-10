@@ -48,7 +48,7 @@ public class AFN extends AutomatoFinito{
 				posIniRecursao = i + 1;
 				posFimRecursao = expressao.indexOf(')', i);
 				int numPosicoesAPular = posFimRecursao - posIniRecursao;
-				String estadoInicialTemporarioParenteses = ""+contadorEstados;
+				//String estadoInicialTemporarioParenteses = ""+contadorEstados;
 				definirEstados();
 				//estadoInicialTemporario = estadoInicialTemporarioParenteses;
 				

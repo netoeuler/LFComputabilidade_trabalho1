@@ -40,7 +40,7 @@ public class AutomatoFinito {
 	protected ArrayList<String> inicializaEstados(){
 		ArrayList<String> array = new ArrayList<String>();		
 		for (int i = 0 ; i < simbolos.size() ; i++)
-			array.add(ExpressaoRegular.VAZIO+" ");
+			array.add(ExpressaoRegular.VAZIO+"");
 		
 		return array;
 	}
@@ -50,7 +50,7 @@ public class AutomatoFinito {
 		int i = 0;
 		
 		for (String a : arraylist)
-			array[i++] = a;
+			array[i++] = a.trim();
 		
 		return array;
 	}

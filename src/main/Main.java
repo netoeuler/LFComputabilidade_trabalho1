@@ -3,7 +3,7 @@ package main;
 public class Main {
 	
 	public static void main(String args[]){
-		String expressao = "(a.b)*b"; 
+		String expressao = "(a+b).b"; 
 		
 		AFN afn = new AFN(expressao);
 		//afn.imprimeTabela();
@@ -12,9 +12,8 @@ public class Main {
 		AFD afd = new AFD(variaveisDoAFNProAFD);
 		afd.imprimeTabela();
 		
-		String palavra = "aba";
-		//System.out.println(afd.checaValidadePalavra(palavra));
-		
+		String palavra = "ab";
+		System.out.println("\n\n"+afd.checaValidadePalavra(palavra));		
 	}
 
 }
