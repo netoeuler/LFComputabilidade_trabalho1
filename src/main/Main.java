@@ -2,9 +2,13 @@ package main;
 
 public class Main {
 	
+	//* . +
 	public static void main(String args[]){
-		String expressao = "(a+b).b"; 
+		//String expressao = ExpressaoRegular.formatarPorPrecedencia("a.(a.b.(b.c)*)*");
+		String expressao = ExpressaoRegular.formatarPorPrecedencia("(a.b)+(a.b)");
+		//System.out.println(expressao);		
 		
+		///*
 		AFN afn = new AFN(expressao);
 		//afn.imprimeTabela();
 		
@@ -12,8 +16,9 @@ public class Main {
 		AFD afd = new AFD(variaveisDoAFNProAFD);
 		afd.imprimeTabela();
 		
-		String palavra = "ab";
-		System.out.println("\n\n"+afd.checaValidadePalavra(palavra));		
+		String palavra = "abab";
+		//System.out.println("\n\n"+afd.checaValidadePalavra(palavra));
+		//*/
 	}
 
 }
