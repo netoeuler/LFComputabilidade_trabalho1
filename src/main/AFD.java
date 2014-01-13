@@ -201,8 +201,10 @@ public class AFD extends AutomatoFinito{
 	 * @param est
 	 */
 	private void geraConjuntoDeEstados(String est){
-		if (estadoCorrespondente.containsKey(est))
-			return;
+		Set<String> keys = estadoCorrespondente.keySet();
+		for (String k : keys)
+			if (estadoCorrespondente.get(k).equals(est))
+				return;
 		
 		ArrayList<String> array = inicializaEstados();
 		
