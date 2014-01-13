@@ -92,6 +92,34 @@ public class AutomatoFinito {
 	}
 	
 	/**
+	 * Ordena os conjuntos de estados para que não haja distinção.
+	 * Evita, por exemplo, que q0q1 seja diferente de q1q0. 
+	 * Então faz a ordenação de q1q0 ficando q0q1
+	 * @param estados
+	 * @return
+	 */
+	protected String ordenarConjuntoDeEstados(String estados){		
+		String[] pc = estados.substring(1).split("q");
+		for (int i = 0 ; i < pc.length ; i++)
+			for (int j = 0 ; j < pc.length ; j++){
+				if (Integer.parseInt(pc[i]) <  Integer.parseInt(pc[j])){
+					String aux = pc[i];
+					pc[i] = pc[j];
+					pc[j] = aux;
+				}
+			}
+		
+		estados = "";
+		
+		for (int i = 0 ; i < pc.length ; i++){
+			if (!estados.contains("q"+pc[i]))
+				estados += "q"+pc[i];
+		}
+		
+		return estados;
+	}
+	
+	/**
 	 * GETTERS AND SETTERS
 	 */
 	public ArrayList<String> getSimbolos() {

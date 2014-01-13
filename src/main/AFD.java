@@ -8,7 +8,7 @@ public class AFD extends AutomatoFinito{
 	
 	private HashMap<String, String[]> estadosDoAFN;
 	
-	private String[] estadoTemporario;	
+	private ArrayList<String> estadoTemporario;	
 	
 	private HashMap<String, String> estadoCorrespondente;	
 	
@@ -18,22 +18,90 @@ public class AFD extends AutomatoFinito{
 		
 		simbolos = (ArrayList<String>) variaveis[0];
 		simbolos.remove(this.simbolos.size()-1);		
-		estados = (HashMap<String, String[]>) variaveis[1];
 		estadoInicial = (String) variaveis[2];
 		estadosDeAceitacao = (ArrayList<Integer>) variaveis[3];
 		posIniRecursao = -1;
 		posFimRecursao = -1;
 		contadorEstados = estadosDoAFN.size();
+		estadoTemporario = new ArrayList<String>();
 		
-		definirEstados();
+		estados = new HashMap<String, String[]>();
+		for (int i = 0 ; i < estadosDoAFN.size() ; i++){
+			String[] est = estadosDoAFN.get("q"+i);
+			estados.put("q"+i, est);
+		}
+		estados.put(""+ExpressaoRegular.VAZIO, converterArrayListParaArray(inicializaEstados()));
+		
+		eliminarTransicoesVazias();
+		adicionarEstadosCompostos();
+		//definirEstados();
 		removeTransicoesDeSimboloVazio();		
-	}	
+	}
+	
+	private void adicionarEstadosCompostos(){
+		for (int i = 0 ; i < estadosDoAFN.size() ; i++){
+			String[] estadoAtual = estadosDoAFN.get("q"+i);
+			
+			for (int j = 0 ; j < estadoAtual.length; j++){
+				String[] conjEstados = estadoAtual[j].substring(1).split("q");
+				if (conjEstados.length > 1)
+					geraConjuntoDeEstados(estadoAtual[j]);
+			}
+		}
+	}
+	
+	private void eliminarTransicoesVazias(){
+		int posIni = posIniRecursao == -1 ? 0 : posIniRecursao;
+		int posFim = posFimRecursao == -1 ? estadosDoAFN.size() : posFimRecursao;
+		
+		for (int i = posIni ; i < posFim ; i++){
+			String[] estadoAtual = estadosDoAFN.get("q"+i);
+			int indV = simbolos.size();			
+			
+			if (!estadoAtual[indV].equals(""+ExpressaoRegular.VAZIO)){
+				String[] transicoesVazias = estadoAtual[estadoAtual.length - 1].substring(1).split("q");
+				for (String ind : transicoesVazias){				
+					int indice = new Integer(ind);
+					posIniRecursao = indice;
+					posFimRecursao = indice+1;
+					eliminarTransicoesVazias();
+					
+					String[] estTemp;
+					if (estadoTemporario.size() > 0)
+						estTemp = estados.get(estadoTemporario.get(estadoTemporario.size() - 1));
+					else
+						estTemp = estados.get("q"+ind);
+					
+					for (int j = 0 ; j < estadoAtual.length - 1; j++){						
+						if (!estTemp[j].equals(""+ExpressaoRegular.VAZIO))
+							if (estadoAtual[j].equals(""+ExpressaoRegular.VAZIO))
+								estadoAtual[j] = estTemp[j];
+							else{
+								estadoAtual[j] = estTemp[j]+estadoAtual[j];								
+								estadoAtual[j] = ordenarConjuntoDeEstados(estadoAtual[j]);
+								geraConjuntoDeEstados(estadoAtual[j]);
+							}
+					}
+					estadoAtual[estadoAtual.length - 1] = ""+ExpressaoRegular.VAZIO;
+					
+					estados.put("q"+i, estadoAtual);
+					if (estadoTemporario.size() > 0)
+						estadoTemporario.remove(estadoTemporario.size() - 1);
+				}
+			}
+			else if (posIniRecursao != -1)			
+				estadoTemporario.add("q"+i);			
+		}
+		
+	}
+	
 	
 	/**
 	 * Verifica todos os estados definidos no AFN e faz suas devidas alterações
 	 * para formar um AFD
 	 */
-	public void definirEstados(){
+	/*
+	private void definirEstados(){
 		ArrayList<String> eEtr;
 		
 		if (!estados.containsKey(""+ExpressaoRegular.VAZIO)){
@@ -114,7 +182,7 @@ public class AFD extends AutomatoFinito{
 		posIniRecursao = -1;
 		posFimRecursao = -1;		
 	}
-	
+	*/
 	/**
 	 * Remove as transições de palavra vazia, pois só fazem parte do AFN
 	 */
@@ -125,35 +193,7 @@ public class AFD extends AutomatoFinito{
 			if (estadoAtual != null)
 				estadoAtual[estadoAtual.length - 1] = "";
 		}
-	}
-	
-	/**
-	 * Ordena os conjuntos de estados para que não haja distinção.
-	 * Evita, por exemplo, que q0q1 seja diferente de q1q0. 
-	 * Então faz a ordenação de q1q0 ficando q0q1
-	 * @param estados
-	 * @return
-	 */
-	private String ordenarConjuntoDeEstados(String estados){		
-		String[] pc = estados.substring(1).split("q");
-		for (int i = 0 ; i < pc.length ; i++)
-			for (int j = 0 ; j < pc.length ; j++){
-				if (Integer.parseInt(pc[i]) <  Integer.parseInt(pc[j])){
-					String aux = pc[i];
-					pc[i] = pc[j];
-					pc[j] = aux;
-				}
-			}
-		
-		estados = "";
-		
-		for (int i = 0 ; i < pc.length ; i++){
-			if (!estados.contains("q"+pc[i]))
-				estados += "q"+pc[i];
-		}
-		
-		return estados;
-	}
+	}	
 	
 	/**
 	 * Gera o conjunto de estados passado como parâmetro combinando as transições
@@ -161,6 +201,9 @@ public class AFD extends AutomatoFinito{
 	 * @param est
 	 */
 	private void geraConjuntoDeEstados(String est){
+		if (estadoCorrespondente.containsKey(est))
+			return;
+		
 		ArrayList<String> array = inicializaEstados();
 		
 		String[] listaEstados = est.substring(1).split("q");
@@ -181,7 +224,8 @@ public class AFD extends AutomatoFinito{
 						}
 					}
 				
-				array.set(i, estadoAtual[i]);
+				if (!estadoAtual[i].equals(""+ExpressaoRegular.VAZIO))
+					array.set(i, estadoAtual[i]);
 			}			
 			estadoTemporario = estadoAtual;
 		}

@@ -79,17 +79,29 @@ public class AFN extends AutomatoFinito{
 				eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+estadoInicialTemporario);
 				estados.put("q"+contadorEstados, converterArrayListParaArray(eEtr));
 				
-				//estadoInicialTemporario = ""+(contadorEstados-1);
-				estadoInicialTemporario = ""+(contadorEstados);
+				estadoInicialTemporario = ""+(contadorEstados-1);
+				//estadoInicialTemporario = ""+(contadorEstados);
 				
 				for (Integer ea : estadosDeAceitacao){
+					int indV = simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA);
+					//String elemNaPosicaoV = estados.get("q"+ea)[indV];
 					eEtr = converterArrayParaArrayList(estados.get("q"+ea));
-					eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+estadoInicialTemporario);
+					//if (estados.get("q"+ea)[indV].equals(""+ExpressaoRegular.PALAVRA_VAZIA))
+					if (estados.get("q"+ea)[indV].equals(""+ExpressaoRegular.VAZIO))
+						eEtr.set(indV, "q"+estadoInicialTemporario);
+					else{
+						String estadoASerAdicionado = ordenarConjuntoDeEstados(estados.get("q"+ea)[indV]+"q"+estadoInicialTemporario);
+						eEtr.set(indV, estadoASerAdicionado);
+						//eEtr.set(indV, estados.get("q"+ea)[indV]+"q"+estadoInicialTemporario);
+					}
 					estados.put("q"+ea, converterArrayListParaArray(eEtr));
-				}				
+				}
+				
+				estadoInicialTemporario = ""+(contadorEstados);
 				
 				estadoInicial = ""+contadorEstados;
 				estadosDeAceitacao.add(contadorEstados);
+				ultimosEstadosDeAceitacaoAdicionados.add(""+contadorEstados);
 			}
 			else if (expressao.charAt(i) == ExpressaoRegular.CONCATENACAO){
 				posIniRecursao = i+1;
@@ -104,11 +116,20 @@ public class AFN extends AutomatoFinito{
 				definirEstados();
 				
 				for (String ea : estadoB)
-					estadosDeAceitacao.remove( estadosDeAceitacao.indexOf(new Integer(ea)) );
+					if (estadosDeAceitacao.contains(new Integer(ea)))
+						estadosDeAceitacao.remove( estadosDeAceitacao.indexOf(new Integer(ea)) );
 				
 				for (String ea : estadoB){
 					ArrayList<String> eEtr = converterArrayParaArrayList(estados.get("q"+ea));
-					eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+estadoInicialTemporario);
+					int indV = simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA);
+					if (estados.get("q"+ea)[indV].equals(""+ExpressaoRegular.VAZIO))
+						eEtr.set(indV, "q"+estadoInicialTemporario);
+					else{
+						String estadoASerAdicionado = ordenarConjuntoDeEstados(estados.get("q"+ea)[indV]+"q"+estadoInicialTemporario);
+						eEtr.set(indV, estadoASerAdicionado);
+						//eEtr.set(indV, estados.get("q"+ea)[indV]+"q"+estadoInicialTemporario);
+					}
+					//eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+estadoInicialTemporario);
 					estados.put("q"+ea, converterArrayListParaArray(eEtr));
 				}
 				
