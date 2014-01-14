@@ -34,10 +34,12 @@ public class AFD extends AutomatoFinito{
 		
 		eliminarTransicoesVazias();
 		adicionarEstadosCompostos();
-		//definirEstados();
 		removeTransicoesDeSimboloVazio();		
 	}
 	
+	/**
+	 * Adiciona os estados compostos que são formados ao converter o AFN em AFD
+	 */
 	private void adicionarEstadosCompostos(){
 		for (int i = 0 ; i < estadosDoAFN.size() ; i++){
 			String[] estadoAtual = estadosDoAFN.get("q"+i);
@@ -50,6 +52,12 @@ public class AFD extends AutomatoFinito{
 		}
 	}
 	
+	/**
+	 * Elimina as transições vazias uma vez que estas não fazem parte do AFD
+	 * Para remover uma transição vazia de um estado é feita uma chamada recursiva "caminhando"
+	 * sobre suas transições vazias até que encontre uma que não seja.
+	 * Exemplificando: (qo -E-> q1 q1 -a->q2) vira (q0 -a-> q2)
+	 */
 	private void eliminarTransicoesVazias(){
 		int posIni = posIniRecursao == -1 ? 0 : posIniRecursao;
 		int posFim = posFimRecursao == -1 ? estadosDoAFN.size() : posFimRecursao;
@@ -60,10 +68,17 @@ public class AFD extends AutomatoFinito{
 			
 			if (!estadoAtual[indV].equals(""+ExpressaoRegular.VAZIO)){
 				String[] transicoesVazias = estadoAtual[estadoAtual.length - 1].substring(1).split("q");
-				for (String ind : transicoesVazias){				
+				for (String ind : transicoesVazias){					
 					int indice = new Integer(ind);
 					posIniRecursao = indice;
 					posFimRecursao = indice+1;
+					
+					//Como as transições vazias serão removidas, se um estado A possui
+					//transição vazia com um estado B que é estado de aceitação, então
+					//A passa a ser estado de aceitação
+					if (estadosDeAceitacao.contains(indice) && !estadosDeAceitacao.contains(i))
+						estadosDeAceitacao.add(i);
+					
 					eliminarTransicoesVazias();
 					
 					String[] estTemp;
@@ -90,99 +105,11 @@ public class AFD extends AutomatoFinito{
 				}
 			}
 			else if (posIniRecursao != -1)			
-				estadoTemporario.add("q"+i);			
+				estadoTemporario.add("q"+i);
 		}
 		
-	}
+	}	
 	
-	
-	/**
-	 * Verifica todos os estados definidos no AFN e faz suas devidas alterações
-	 * para formar um AFD
-	 */
-	/*
-	private void definirEstados(){
-		ArrayList<String> eEtr;
-		
-		if (!estados.containsKey(""+ExpressaoRegular.VAZIO)){
-			eEtr = inicializaEstados();		
-			estados.put(""+ExpressaoRegular.VAZIO, converterArrayListParaArray(eEtr));
-		}
-		
-		int posIni = posIniRecursao == -1 ? 0 : posIniRecursao;
-		int posFim = posFimRecursao == -1 ? estadosDoAFN.size() : posFimRecursao;
-		
-		for (int i = posIni ; i < posFim ; i++){
-			boolean ehConjuntoDeEstados = false;
-			
-			String[] estadoAtual = estadosDoAFN.get("q"+i);
-			if (estadoAtual == null){
-				estadoAtual = estadosDoAFN.get( estadoCorrespondente.get("q"+i) );
-				if (estadoAtual == null)
-					estadoAtual = estadosDoAFN.get(""+ExpressaoRegular.VAZIO);
-				else
-					ehConjuntoDeEstados = true;
-			}
-			
-			//Checa se alguma transição é conjunto de estados e se for ordena
-			for (int k = 0 ; k < estadoAtual.length ; k++){
-				int numQs = estadoAtual[k].substring(1).split("q").length;
-				if (!estadoAtual[k].equals(""+ExpressaoRegular.VAZIO) && numQs > 1)
-					estadoAtual[k] = ordenarConjuntoDeEstados(estadoAtual[k]);
-			}			
-			
-			boolean apenasTransicaoVazia = true;			
-			//Verifica todas as transições do estado
-			for (int j = 0 ; j < estadoAtual.length && apenasTransicaoVazia; j++){				
-				if (j != (estadoAtual.length - 1) && !estadoAtual[j].equals(""+ExpressaoRegular.VAZIO))
-					apenasTransicaoVazia = false;
-			}
-			
-			//Faz o tratamento do estado se ele tiver transição vazia ou for um conjunto de estados
-			if ((apenasTransicaoVazia && !estadoAtual[estadoAtual.length - 1].equals(""+ExpressaoRegular.VAZIO))
-					|| ehConjuntoDeEstados){
-				String[] transicoesVazias = estadoAtual[estadoAtual.length - 1].substring(1).split("q");
-				for (String ind : transicoesVazias){					
-					//Se for uma transição vazia, faz recursão até achar uma transição que não seja vazia
-					//para associar o estado ao primeiro após a transição vazia
-					//Ex: (q0 -E-> q1 -a-> q2) vira (q0 -a-> q2)					
-					if (!ehConjuntoDeEstados){
-						int indice = new Integer(ind);
-						posIniRecursao = indice;
-						posFimRecursao = indice+1;					
-						definirEstados();
-					}
-					else
-						estadoTemporario = converterArrayListParaArray(inicializaEstados());
-					
-					for (int j = 0 ; j < estadoAtual.length ; j++){
-						if (!estadoTemporario[j].equals(""+ExpressaoRegular.VAZIO))
-							if (estadoAtual[j].equals(""+ExpressaoRegular.VAZIO))
-								estadoAtual[j] = estadoTemporario[j];
-							else{
-								estadoAtual[j] = estadoTemporario[j]+estadoAtual[j];								
-								estadoAtual[j] = ordenarConjuntoDeEstados(estadoAtual[j]);
-								geraConjuntoDeEstados(estadoAtual[j]);
-							}
-					}					
-					
-					if (ehConjuntoDeEstados)
-						estados.put(estadoCorrespondente.get("q"+i), estadoAtual);
-					else
-						estados.put("q"+i, estadoAtual);
-				}
-			}
-			else if (!apenasTransicaoVazia && posIniRecursao != -1){
-				//Ao percorrer a transição vazia e achar uma que não seja, o estado que possui essa
-				//transição é armazenado em estadoTemporario
-				estadoTemporario = estadoAtual;
-			}
-		}
-		
-		posIniRecursao = -1;
-		posFimRecursao = -1;		
-	}
-	*/
 	/**
 	 * Remove as transições de palavra vazia, pois só fazem parte do AFN
 	 */
@@ -247,7 +174,7 @@ public class AFD extends AutomatoFinito{
 	 * @param palavra
 	 * @return
 	 */
-	public boolean checaValidadePalavra(String palavra){
+	public int checaValidadePalavra(String palavra){
 		String estadoAtual = "q"+estadoInicial;
 		
 		for (int i = 0 ; i < palavra.length() ; i++){			
@@ -267,14 +194,14 @@ public class AFD extends AutomatoFinito{
 		String[] estadoAtualArray = estadoAtual.replace("q", " ").substring(1).split(" ");
 		
 		if (estadoAtual.equals(""+ExpressaoRegular.VAZIO))
-			return false;
+			return 0; //false
 		else{
 			for (String ea : estadoAtualArray){
 				if (estadosDeAceitacao.contains(new Integer(ea)))
-					return true;
+					return 1; //true
 			}
 			
-			return false;
+			return 0; //false
 		}
 	}
 

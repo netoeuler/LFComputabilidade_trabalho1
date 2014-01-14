@@ -49,8 +49,9 @@ public class AFN extends AutomatoFinito{
 		for (int i = posIni ; i < posFim ; i++){
 			if (expressao.charAt(i) == '('){
 				posIniRecursao = i + 1;
-				posFimRecursao = expressao.indexOf(')', i) + 1;
-				int numPosicoesAPular = posFimRecursao - posIniRecursao;
+				calculaPosFimRecursao(i);
+				
+				int numPosicoesAPular = posFimRecursao - posIniRecursao;				
 				definirEstados();
 				
 				i += numPosicoesAPular;
@@ -76,9 +77,14 @@ public class AFN extends AutomatoFinito{
 				eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+estadoInicialTemporario);
 				estados.put("q"+contadorEstados, converterArrayListParaArray(eEtr));
 				
+				ArrayList<String> estadoB = new ArrayList<String>();
+				for (String e : ultimosEstadosDeAceitacaoAdicionados)
+					estadoB.add(e);
+				
 				ultimosEstadosDeAceitacaoAdicionados.clear();
 				
-				for (Integer ea : estadosDeAceitacao){
+				//for (Integer ea : estadosDeAceitacao){
+				for (String ea : estadoB){
 					int indV = simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA);					
 					eEtr = converterArrayParaArrayList(estados.get("q"+ea));
 					if (estados.get("q"+ea)[indV].equals(""+ExpressaoRegular.VAZIO))
@@ -93,19 +99,28 @@ public class AFN extends AutomatoFinito{
 				
 				estadoInicialTemporario = ""+(contadorEstados);
 				
-				estadoInicial = ""+contadorEstados;
+				String[] estadoIniEstrela = estados.get("q"+contadorEstados);
+				if (estadoIniEstrela[estadoIniEstrela.length-1].contains("q"+estadoInicial))
+					estadoInicial = ""+contadorEstados;
+								
 				estadosDeAceitacao.add(contadorEstados);
 				ultimosEstadosDeAceitacaoAdicionados.add(""+contadorEstados);
 			}
 			else if (expressao.charAt(i) == ExpressaoRegular.CONCATENACAO){
 				posIniRecursao = i+1;
-				posFimRecursao = expressao.charAt(i+1) == '(' ? expressao.indexOf(')', i+1) : i+2;
+				calculaPosFimRecursao(i);
+				//posFimRecursao = expressao.charAt(i+1) == '(' ? expressao.indexOf(')', i+1) : i+2;
+					
 				int numPosicoesAPular = posFimRecursao - posIniRecursao;
 				String estadoA = estadoInicialTemporario;				
 				ArrayList<String> estadoB = new ArrayList<String>();
 				for (String e : ultimosEstadosDeAceitacaoAdicionados)
 					estadoB.add(e);
 				
+				//Se estadoB for vazio, é porque não tinha sido adicionado nenhum estado
+				//antes de ser chamada a concatenação. Com isso, é removido o último estado
+				//de aceitação registrado já que é o estado que deixará de ser de aceitação
+				//pois vai haver uma transição dele pra a concatenação
 				if (estadoB.size() == 0)
 					estadosDeAceitacao.remove( estadosDeAceitacao.size()-1 );
 					
@@ -128,7 +143,7 @@ public class AFN extends AutomatoFinito{
 						eEtr.set(indV, estadoASerAdicionado);
 					}
 					estados.put("q"+ea, converterArrayListParaArray(eEtr));
-				}
+				}				
 				
 				ultimosEstadosDeAceitacaoAdicionados.clear();				
 				estadoInicialTemporario = estadoA;
@@ -137,18 +152,31 @@ public class AFN extends AutomatoFinito{
 			}
 			else if (expressao.charAt(i) == ExpressaoRegular.UNIAO){
 				posIniRecursao = i+1;
-				posFimRecursao = expressao.charAt(i+1) == '(' ? expressao.indexOf(')', i+1) : i+2;
+				calculaPosFimRecursao(i);
+				//posFimRecursao = expressao.charAt(i+1) == '(' ? expressao.indexOf(')', i+1) : i+2;				
+				
 				int numPosicoesAPular = posFimRecursao - posIniRecursao;
 				String estadoA = estadoInicialTemporario;
+				ArrayList<String> estadoB = new ArrayList<String>();
+				for (String e : ultimosEstadosDeAceitacaoAdicionados)
+					estadoB.add(e);
+				
 				contadorEstados++;
 				definirEstados();
 				contadorEstados++;
+				
+				for (String e : estadoB)
+					ultimosEstadosDeAceitacaoAdicionados.add(e);
 				
 				ArrayList<String> eEtr = inicializaEstados();				
 				eEtr.set(simbolos.indexOf(""+ExpressaoRegular.PALAVRA_VAZIA), "q"+estadoA+"q"+estadoInicialTemporario);
 				estados.put("q"+contadorEstados, converterArrayListParaArray(eEtr));								
 				
-				estadoInicial = ""+contadorEstados;
+				String[] estadoIniUniao = estados.get("q"+contadorEstados);
+				if (estadoIniUniao[estadoIniUniao.length-1].contains("q"+estadoInicial))
+					estadoInicial = ""+contadorEstados;
+				
+				//estadoInicial = ""+contadorEstados;
 				estadoInicialTemporario = ""+contadorEstados;
 				
 				i += numPosicoesAPular;
@@ -174,6 +202,26 @@ public class AFN extends AutomatoFinito{
 		
 		posIniRecursao = -1;
 		posFimRecursao = -1;
-	}	
+	}
+	
+	private void calculaPosFimRecursao(int i){
+		if (expressao.charAt(i+1) != '(')
+			posFimRecursao = i+2;
+		else{
+			int contadorParenteses = 0;
+			posFimRecursao = i+2;
+			while (true){
+				if (expressao.charAt(posFimRecursao) == ')' && contadorParenteses == 0)
+					break;
+					
+				if (expressao.charAt(posFimRecursao) == '(')
+					contadorParenteses++;
+				else if (expressao.charAt(posFimRecursao) == ')')
+					contadorParenteses--;
+				
+				posFimRecursao++;
+			}
+		}
+	}
 	
 }
