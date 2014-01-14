@@ -57,8 +57,6 @@ public class AFN extends AutomatoFinito{
 				i += numPosicoesAPular;
 			}
 			else if (expressao.charAt(i) == ExpressaoRegular.VAZIO || expressao.charAt(i) == ExpressaoRegular.PALAVRA_VAZIA){
-				contadorEstados++;
-				
 				if (estadoInicial.equals("-1"))
 					estadoInicial = ""+contadorEstados;
 				estadoInicialTemporario = ""+contadorEstados;
